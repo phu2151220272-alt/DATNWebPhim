@@ -1,13 +1,1 @@
-tk mk admin : admin@gmail.com 123456
 
-
-link 1 : https://console.cloud.google.com
-
---- https://mail.google.com
-
-link 2 : https://aistudio.google.com/apikey
-
-link 3 : https://cloudinary.com/
-
-
-warning trong trường cần build lại : docker compose up --build
