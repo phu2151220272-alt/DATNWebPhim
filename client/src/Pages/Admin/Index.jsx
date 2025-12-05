@@ -46,12 +46,12 @@ function Admin() {
         {
             key: 'home',
             icon: <HomeOutlined />,
-            label: 'Trang chủ',
+            label: 'Quản Lý Thống Kê',
         },
         {
             key: 'products',
             icon: <ShoppingOutlined />,
-            label: 'Quản lý sản phẩm',
+            label: 'Quản lý phim',
         },
         // {
         //     key: 'blogs',
@@ -66,7 +66,7 @@ function Admin() {
         {
             key: 'order',
             icon: <ShoppingOutlined />,
-            label: 'Quản lý đơn hàng',
+            label: 'Quản lý vé',
         },
         {
             key: 'users',

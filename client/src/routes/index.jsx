@@ -9,6 +9,7 @@ import ProfileUser from '../Pages/InfoUser/ProfileUser';
 import Category from '../Pages/Category';
 import Admin from '../Pages/Admin/Index';
 import ForgotPassword from '../Pages/ForgotPassword';
+import BookingHistory from '../Pages/InfoUser/BookingHistory';
 
 export const routes = [
     {
@@ -23,6 +24,10 @@ export const routes = [
     //     path: '/blog/:id',
     //     component: <DetailBlog />,
     // },
+    {
+        path: '/history',
+        component: <BookingHistory />,
+    },
     {
         path: '/login',
         component: <Login />,

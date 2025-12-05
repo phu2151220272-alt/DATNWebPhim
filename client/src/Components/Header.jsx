@@ -9,6 +9,7 @@ import {
     LogoutOutlined,
     SettingOutlined,
     SearchOutlined,
+    HistoryOutlined,
 } from '@ant-design/icons';
 import { useStore } from '../hooks/useStore';
 import { requestLogout, requestSearchMovie } from '../config/request';
@@ -86,6 +87,15 @@ function Header() {
         {
             key: '2',
             label: (
+                <Link to="/history" className="flex items-center gap-2">
+                    <HistoryOutlined />
+                    <span>Lịch sử thanh toán</span>
+                </Link>
+            ),
+        },
+        {
+            key: '3',
+            label: (
                 <Link to="/settings" className="flex items-center gap-2">
                     <SettingOutlined />
                     <span>Cài đặt</span>
@@ -93,7 +103,7 @@ function Header() {
             ),
         },
         {
-            key: '3',
+            key: '4',
             label: (
                 <div onClick={handleLogout} className="flex items-center gap-2 text-red-500">
                     <LogoutOutlined />
@@ -299,7 +309,10 @@ function Header() {
                                     <UserOutlined />
                                     <span>Thông tin tài khoản</span>
                                 </Link>
-
+                                <Link to="/history" className="flex items-center gap-2 text-white py-2">
+                                    <HistoryOutlined />
+                                    <span>Lịch sử thanh toán</span>
+                                </Link>
                                 <Link to="/settings" className="flex items-center gap-2 text-white py-2">
                                     <SettingOutlined />
                                     <span>Cài đặt</span>

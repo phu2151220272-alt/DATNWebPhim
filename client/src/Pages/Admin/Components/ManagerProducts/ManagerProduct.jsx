@@ -1,5 +1,5 @@
 import { Table, Button, Space, Modal, Form, Input, InputNumber, Upload, Select, message, DatePicker } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, UploadOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 
@@ -20,6 +20,16 @@ const { Search } = Input;
 const { TextArea } = Input;
 
 function ManagerProduct() {
+    const [previewVisible, setPreviewVisible] = useState(false);
+    const [previewTrailerUrl, setPreviewTrailerUrl] = useState('');
+    const openPreview = (url) => {
+        setPreviewTrailerUrl(url || '');
+        setPreviewVisible(true);
+    };
+    const closePreview = () => {
+        setPreviewVisible(false);
+        setTimeout(() => setPreviewTrailerUrl(''), 200);
+    };
     const [form] = Form.useForm();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMovie, setEditingMovie] = useState(null);
@@ -35,7 +45,25 @@ function ManagerProduct() {
         fetchCategories();
         fetchMovies();
     }, []);
-
+    const extractSrcFromIframe = (input) => {
+        if (!input) return '';
+        const m = input.match(/src=(?:'|")([^'"]+)(?:'|")/i);
+        return m ? m[1] : input.trim();
+    };
+    const toWatchUrl = (url) => {
+        try {
+            const u = new URL(url);
+            if (u.hostname.includes('youtube.com') && u.pathname.includes('/embed/')) {
+            const id = u.pathname.split('/embed/')[1];
+            return `https://www.youtube.com/watch?v=${id}`;
+            }
+            if (u.hostname === 'youtu.be') {
+            const id = u.pathname.replace('/', '');
+            return `https://www.youtube.com/watch?v=${id}`;
+            }
+        } catch (e) {}
+        return url;
+    };
     const fetchCategories = async () => {
         try {
             const response = await requestGetAllCategory();
@@ -93,6 +121,7 @@ function ManagerProduct() {
             year: record.year,
             dateStart: record.dateStart ? dayjs(record.dateStart) : null,
             dateEnd: record.dateEnd ? dayjs(record.dateEnd) : null,
+            trailerUrl: record.trailer_url || record.trailerUrl || '',
         });
 
         // Reset file states when editing
@@ -124,16 +153,34 @@ function ManagerProduct() {
     const handleModalOk = async () => {
         try {
             const values = await form.validateFields();
+            
+            let trailerInput = values.trailerUrl || (editingMovie && (editingMovie.trailer_url || editingMovie.trailerUrl)) || '';
+            trailerInput = extractSrcFromIframe(trailerInput);
+            // validate embeddable via YouTube oEmbed when possible
+            if (trailerInput.includes('youtube')) {
+            const checkUrl = encodeURIComponent(toWatchUrl(trailerInput));
+            try {
+                const res = await fetch(`https://www.youtube.com/oembed?format=json&url=${checkUrl}`);
+                if (!res.ok) {
+                message.error('Video YouTube hiện không cho phép nhúng (embed). Vui lòng dùng video khác hoặc lưu link để mở ngoài YouTube.');
+                return; // dừng lưu để admin sửa
+                }
+            } catch (err) {
+                // Nếu bị CORS hoặc mạng, cho phép lưu nhưng cảnh báo
+                console.warn('oEmbed check failed:', err);
+                message.warning('Không thể kiểm tra tính nhúng của YouTube (có thể do CORS). Hãy kiểm tra video sau khi lưu.');
+            }
+            }
             const { poster, thumb, ...rest } = values;
-            setLoading(true);
-
             let data = {
-                ...rest,
-                dateStart: values.dateStart ? values.dateStart.format('YYYY-MM-DD') : null,
-                dateEnd: values.dateEnd ? values.dateEnd.format('YYYY-MM-DD') : null,
+            ...rest,
+            dateStart: values.dateStart ? values.dateStart.format('YYYY-MM-DD') : null,
+            dateEnd: values.dateEnd ? values.dateEnd.format('YYYY-MM-DD') : null,
             };
-
+            if (trailerInput) data.trailer_url = trailerInput;
+            else if (editingMovie) data.trailer_url = editingMovie.trailer_url || editingMovie.trailerUrl || '';
             // Handle image upload
+            setLoading(true);
             if (thumbFile || posterFile) {
                 const formData = new FormData();
 
@@ -238,6 +285,45 @@ function ManagerProduct() {
             key: 'quality',
         },
         {
+            title: 'Trailer',
+            dataIndex: 'trailer_url',
+            key: 'trailer',
+            render: (trailer, record) => {
+                const url = trailer || record.trailerUrl || record.trailer_url || '';
+                return (
+                    <Space>
+                        {url ? (
+                            <>
+                                <Button
+                                    icon={<PlayCircleOutlined />}
+                                    size="small"
+                                    onClick={() => openPreview(url)}
+                                >
+                                    Xem
+                                </Button>
+                                <Button
+                                    type="link"
+                                    size="small"
+                                    onClick={async () => {
+                                        try {
+                                            await navigator.clipboard.writeText(url);
+                                            message.success('Đã sao chép link trailer');
+                                        } catch {
+                                            message.error('Sao chép thất bại');
+                                        }
+                                        }}
+                                >
+                                    Sao chép
+                                </Button>
+                            </>
+                        ) : (
+                            <span className="text-gray-400">Chưa có</span>
+                        )}
+                    </Space>
+                );
+            },
+        },
+        {
             title: 'Thao tác',
             key: 'action',
             render: (_, record) => (
@@ -289,6 +375,26 @@ function ManagerProduct() {
                 loading={loading}
                 pagination={{ pageSize: 10 }}
             />
+            <Modal
+                title="Xem Trailer"
+                open={previewVisible}
+                onCancel={closePreview}
+                footer={null}
+                width="80%"
+                bodyStyle={{ padding: 0, background: '#000' }}
+            >
+                <div style={{ width: '100%', height: '56.25vw', maxHeight: '70vh' }}>
+                    {previewTrailerUrl ? (
+                        (previewTrailerUrl.includes('youtube') || previewTrailerUrl.includes('youtu.be')) ? (
+                            <iframe src={previewTrailerUrl} title="Trailer" style={{ width: '100%', height: '100%' }} allowFullScreen />
+                        ) : (
+                            <video src={previewTrailerUrl} controls style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        )
+                    ) : (
+                        <div style={{ padding: 24, color: '#fff', textAlign: 'center' }}>Trailer chưa có</div>
+                    )}
+                </div>
+            </Modal>
 
             <Modal
                 title={editingMovie ? 'Chỉnh sửa phim' : 'Thêm phim mới'}
@@ -425,8 +531,15 @@ function ManagerProduct() {
                         rules={[{ required: true, message: 'Vui lòng nhập mô tả phim!' }]}
                     >
                         <TextArea rows={4} placeholder="Nhập mô tả chi tiết về phim" />
-                    </Form.Item>
 
+                    </Form.Item>
+                    <Form.Item
+                        name="trailerUrl"
+                        label="Trailer URL"
+                        rules={[{ required: false, message: 'Nhập URL trailer (embed hoặc mp4)' }]}
+                    >
+                        <Input placeholder="Ví dụ: https://www.youtube.com/embed/ID hoặc https://domain.com/trailer.mp4" />
+                    </Form.Item>
                     <div className={cx('form-row')}>
                         <Form.Item
                             name="thumb"

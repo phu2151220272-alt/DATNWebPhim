@@ -244,3 +244,13 @@ export const requestCreatePreviewMovie = async (data) => {
     const res = await apiClient.post(`${apiPreviewMovie}/create`, data);
     return res.data;
 };
+
+export const requestChatbot = async (data) => {
+    const res = await apiClient.post(`${apiUser}/chatbot`, data);
+    return res.data;
+};
+
+export const requestGetMessageChatbot = async () => {
+    const res = await apiClient.get(`${apiUser}/chatbot`);
+    return res.data;
+};

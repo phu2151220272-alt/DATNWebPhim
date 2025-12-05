@@ -270,7 +270,7 @@ function DashBoard() {
                 </Col>
                 <Col xs={24} sm={12} lg={6}>
                     <Card>
-                        <Statistic title="Lượt xem phim" value={statistics.totalWatching} prefix={<EyeOutlined />} />
+                        <Statistic title="Lượt vé bán" value={statistics.totalWatching} prefix={<EyeOutlined />} />
                     </Card>
                 </Col>
             </Row>

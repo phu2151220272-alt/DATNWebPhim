@@ -2,6 +2,7 @@ const modelUser = require('../models/users.model');
 
 const modelApiKey = require('../models/apiKey.model');
 const modelOtp = require('../models/otp.model');
+const modelMessageChatbot = require('../models/messageChatbot.model');
 
 const { BadRequestError, AuthFailureError } = require('../core/error.response');
 const { OK } = require('../core/success.response');
@@ -15,6 +16,7 @@ const otpGenerator = require('otp-generator');
 const { jwtDecode } = require('jwt-decode');
 const { connect } = require('../config/index');
 const sendMailForgotPassword = require('../utils/sendMailForgotPassword');
+const { askMovieAssistant } = require('../utils/chatbot');
 
 class UsersController {
     async registerUser(req, res) {
@@ -515,6 +517,32 @@ class UsersController {
             console.error('Dashboard Error:', error);
             res.status(500).json({ message: 'Internal server error', error: error.message });
         }
+    }
+
+    async chatbot(req, res) {
+        const { question } = req.body;
+        const { id } = req.user;
+        const response = await askMovieAssistant(question, id);
+
+        await modelMessageChatbot.create({
+            userId: id,
+            sender: 'user',
+            content: question,
+        });
+
+        await modelMessageChatbot.create({
+            userId: id,
+            sender: 'bot',
+            content: response,
+        });
+
+        return new OK({ message: 'Chatbot response retrieved successfully', metadata: response }).send(res);
+    }
+
+    async getChatbot(req, res) {
+        const { id } = req.user;
+        const messages = await modelMessageChatbot.findAll({ where: { userId: id } });
+        return new OK({ message: 'Chatbot messages retrieved successfully', metadata: messages }).send(res);
     }
 }
 

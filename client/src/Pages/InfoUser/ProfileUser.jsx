@@ -7,7 +7,7 @@ import { message } from 'antd';
 // Import components
 import UserSidebar from './Components/UserSidebar';
 import ProfileForm from './Components/ProfileForm';
-import BookingHistory from './Components/BookingHistory';
+import BookingHistory from './BookingHistory';
 import { ToastContainer } from 'react-toastify';
 import AvatarUploadModal from './Components/AvatarUploadModal';
 

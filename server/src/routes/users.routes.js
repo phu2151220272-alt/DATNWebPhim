@@ -32,6 +32,8 @@ router.post('/update-user', authUser, asyncHandler(controllerUser.updateUser));
 router.post('/update-password', authUser, asyncHandler(controllerUser.updatePassword));
 router.get('/admin', asyncHandler(controllerUser.getUserByAdmin));
 router.post('/update-role-user', asyncHandler(controllerUser.updateRoleUser));
+router.post('/chatbot', authUser, asyncHandler(controllerUser.chatbot));
+router.get('/chatbot', authUser, asyncHandler(controllerUser.getChatbot));
 
 router.get('/api/admin', authAdmin, (req, res) => {
     return res.status(200).json({ message: true });

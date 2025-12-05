@@ -33,17 +33,26 @@ function Login() {
         const { credential } = response; // Nhận ID Token từ Google
         try {
             const res = await requestLoginGoogle({ credential });
-            toast.success(res.message);
+            
+            // Hiển thị thông báo thành công màu xanh
+            toast.success('Đăng nhập bằng Google thành công!', {
+                style: { background: '#4CAF50', color: 'white' },
+                progressStyle: { background: '#45a049' },
+                autoClose: 1000 // Đóng toast sau 1 giây
+            });
+
+            // Đợi toast hiển thị xong rồi mới chuyển trang
             setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-            navigate('/');
+                window.location.href = '/';
+            }, 1500); // Đợi 1.5 giây để toast hiển thị hoàn tất
+            
         } catch (error) {
-            if (error.response && error.response.data && error.response.data.message) {
-                toast.error(error.response.data.message);
-            } else {
-                toast.error('Đăng nhập bằng Google thất bại. Vui lòng thử lại!');
-            }
+            // Xử lý lỗi và hiển thị thông báo lỗi màu đỏ
+            const errorMessage = error.response?.data?.message || 'Đăng nhập thất bại, vui lòng thử lại!';
+            toast.error(errorMessage, {
+                style: { background: '#f44336', color: 'white' },
+                progressStyle: { background: '#d32f2f' }
+            });
         }
     };
 

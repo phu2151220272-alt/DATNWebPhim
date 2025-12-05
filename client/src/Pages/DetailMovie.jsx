@@ -5,12 +5,32 @@ import axios from 'axios';
 
 import { Link, useParams } from 'react-router-dom';
 import { requestGetMovieById } from '../config/request';
-import { Rate } from 'antd';
+import { Rate, Modal } from 'antd';
+
 
 function DetailMovie() {
     const [movie, setMovie] = useState(null);
     const [loading, setLoading] = useState(true);
     const [previewMovie, setPreviewMovie] = useState(null);
+    const [trailerVisible, setTrailerVisible] = useState(false);
+    const toEmbedUrl = (url) => {
+        if (!url) return '';
+        // nếu là youtube watch URL -> chuyển sang embed
+        try {
+            const u = new URL(url);
+            if (u.hostname.includes('youtube.com')) {
+                const v = u.searchParams.get('v');
+                if (v) return `https://www.youtube.com/embed/${v}`;
+            }
+            if (u.hostname === 'youtu.be') {
+                const id = u.pathname.replace('/', '');
+                if (id) return `https://www.youtube.com/embed/${id}`;
+            }
+        } catch (e) {
+            // không phải URL (có thể đã là embed hoặc mp4)
+        }
+        return url;
+    };
 
     const { id } = useParams();
 
@@ -19,6 +39,7 @@ function DetailMovie() {
             try {
                 setLoading(true);
                 const res = await requestGetMovieById(id);
+                console.log('movie API response:', res.metadata);
                 setMovie(res.metadata);
                 setPreviewMovie(res.metadata.previewMovie);
             } catch (error) {
@@ -76,22 +97,28 @@ function DetailMovie() {
                                     className="w-full h-full object-cover rounded-md shadow-xl"
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-16 h-16 rounded-full bg-red-600/50 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors">
-                                        <div className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center">
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className="h-8 w-8"
-                                                viewBox="0 0 20 20"
-                                                fill="currentColor"
-                                            >
-                                                <path
-                                                    fillRule="evenodd"
-                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                                                    clipRule="evenodd"
-                                                />
-                                            </svg>
-                                        </div>
-                                    </div>
+                                    <button
+                                        type="button"
+                                        className="w-16 h-16 rounded-full bg-red-600/50 flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors focus:outline-none"
+                                        onClick={() => {
+                                            console.log('play click, trailer_url=', movie?.trailer_url);
+                                            setTrailerVisible(true);
+                                        }}
+                                        aria-label="Play trailer"
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="h-8 w-8 text-white"
+                                            viewBox="0 0 20 20"
+                                            fill="currentColor"
+                                        >
+                                            <path
+                                                fillRule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                                                clipRule="evenodd"
+                                            />
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
 
@@ -198,6 +225,34 @@ function DetailMovie() {
             </main>
 
             <Footer />
+            <Modal
+                    title={movie?.name + ' - Trailer'}
+                    open={trailerVisible}
+                    onCancel={() => setTrailerVisible(false)}
+                    footer={null}
+                    width={'80%'}
+                    bodyStyle={{ padding: 0, background: '#000' }}
+                >
+                    <div className="w-full h-[56.25vw] max-h-[70vh]">
+                        {movie?.trailer_url ? (
+                            (movie.trailer_url.includes('youtube') || movie.trailer_url.includes('youtu.be')) ? (
+                                <iframe
+                                    src={toEmbedUrl(movie.trailer_url)}
+                                    title="Trailer"
+                                    className="w-full h-full"
+                                    allowFullScreen
+                                />
+                            ) : movie.trailer_url.endsWith('.mp4') ? (
+                                <video src={movie.trailer_url} controls className="w-full h-full object-cover" />
+                            ) : (
+                                // fallback: render as iframe if already embed or external player
+                                <iframe src={movie.trailer_url} title="Trailer" className="w-full h-full" allowFullScreen />
+                            )
+                        ) : (
+                            <div className="p-6 text-center text-white">Trailer chưa có</div>
+                        )}
+                    </div>
+                </Modal>
         </div>
     );
 }

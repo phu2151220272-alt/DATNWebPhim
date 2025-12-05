@@ -1,5 +1,6 @@
 import './App.css';
 import Banner from './Components/Banner';
+import Chatbot from './Components/ChatBot';
 import Footer from './Components/Footer';
 import Header from './Components/Header';
 import HomePage from './Components/HomePage';
@@ -18,6 +19,8 @@ function App() {
                     <HomePage />
                 </div>
             </main>
+
+            <Chatbot />
 
             <footer>
                 <Footer />

@@ -58,12 +58,10 @@ function BookMovie() {
             try {
                 const res = await requestGetMovieById(id);
                 setMovieDetails(res.metadata);
-
                 // Generate available dates for the next 30 days by default
                 const dates = [];
                 const today = moment();
                 let startDate = today.clone();
-
                 // If movie has dateStart and it's in the future, use it as the start date
                 if (res.metadata.dateStart) {
                     const movieStartDate = moment(res.metadata.dateStart);
@@ -77,16 +75,13 @@ function BookMovie() {
                     res.metadata.dateEnd && moment(res.metadata.dateEnd).isValid()
                         ? moment(res.metadata.dateEnd)
                         : today.clone().add(30, 'days');
-
                 // Generate dates from start to end
                 let currentDate = startDate.clone();
                 while (currentDate.isSameOrBefore(endDate)) {
                     dates.push(currentDate.clone());
                     currentDate.add(1, 'days');
                 }
-
                 setAvailableDates(dates);
-
                 // Always set default date to today unless today is before movie start date
                 if (startDate.isAfter(today)) {
                     setSelectedDate(startDate);

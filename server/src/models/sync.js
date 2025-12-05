@@ -6,6 +6,7 @@ const Movie = require('./movie.model');
 const Seat = require('./seat.model');
 const Payments = require('./payments.model');
 const PreviewMovie = require('./previewMovie.model');
+const MessageChatbot = require('./messageChatbot.model');
 
 const sync = async () => {
     // Setup associations between models
@@ -19,6 +20,7 @@ const sync = async () => {
     await Seat.sync();
     await Payments.sync();
     await PreviewMovie.sync();
+    await MessageChatbot.sync();
 };
 
 module.exports = sync;

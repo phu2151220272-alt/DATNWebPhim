@@ -117,6 +117,7 @@ class MovieController {
             dateEnd,
             thumb_url,
             poster_url,
+            trailer_url,
         } = req.body;
 
         const movie = await modelMovie.create({
@@ -132,6 +133,7 @@ class MovieController {
             year,
             thumb_url,
             poster_url,
+            trailer_url,
             dateStart,
             dateEnd,
         });
@@ -213,6 +215,7 @@ class MovieController {
             dateEnd,
             thumb_url,
             poster_url,
+            trailer_url,
             id,
         } = req.body;
 
@@ -234,6 +237,7 @@ class MovieController {
             year,
             thumb_url,
             poster_url,
+            trailer_url,
             dateStart,
             dateEnd,
         };

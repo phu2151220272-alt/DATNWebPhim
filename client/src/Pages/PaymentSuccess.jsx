@@ -254,7 +254,7 @@ function PaymentSuccess() {
                                 <span>Trang chủ</span>
                             </button>
                             <button
-                                onClick={() => navigate('/history')}
+                                onClick={() => navigate('/h')}
                                 className="flex items-center justify-center gap-2 flex-1 py-4 text-white bg-[#22262A] hover:bg-[#33373B] transition-colors duration-300 border-l border-[#333]"
                             >
                                 <HistoryOutlined />

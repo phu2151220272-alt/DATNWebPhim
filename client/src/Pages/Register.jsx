@@ -135,13 +135,13 @@ function Register() {
                         </Form.Item>
                     </Form>
 
-                    <div className="relative my-6">
+                    {/* <div className="relative my-6">
                         <Divider plain className="border-t border-gray-700">
                             <span className="text-gray-400 px-4">Hoặc</span>
                         </Divider>
-                    </div>
+                    </div> */}
 
-                    <div className="space-y-4">
+                    {/* <div className="space-y-4">
                         <button className="w-full flex items-center justify-center gap-2 bg-[#292929] hover:bg-[#333] text-white py-3 px-4 rounded transition duration-200">
                             <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -151,7 +151,7 @@ function Register() {
                             </svg>
                             Đăng ký với Google
                         </button>
-                    </div>
+                    </div> */}
 
                     <div className="mt-6 text-center">
                         <span className="text-gray-400">Đã có tài khoản? </span>
