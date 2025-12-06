@@ -23,7 +23,8 @@ function ManagerProduct() {
     const [previewVisible, setPreviewVisible] = useState(false);
     const [previewTrailerUrl, setPreviewTrailerUrl] = useState('');
     const openPreview = (url) => {
-        setPreviewTrailerUrl(url || '');
+         const clean = extractSrcFromIframe(url || '');
+        setPreviewTrailerUrl(clean);
         setPreviewVisible(true);
     };
     const closePreview = () => {
@@ -60,6 +61,23 @@ function ManagerProduct() {
             if (u.hostname === 'youtu.be') {
             const id = u.pathname.replace('/', '');
             return `https://www.youtube.com/watch?v=${id}`;
+            }
+        } catch (e) {}
+        return url;
+    };
+    const toEmbedUrl = (url) => {
+        if (!url) return '';
+        try {
+            const u = new URL(url);
+            // https://www.youtube.com/watch?v=ID  ->  /embed/ID
+            if (u.hostname.includes('youtube.com')) {
+                const v = u.searchParams.get('v');
+                if (v) return `https://www.youtube.com/embed/${v}`;
+            }
+            // https://youtu.be/ID -> /embed/ID
+            if (u.hostname === 'youtu.be') {
+                const id = u.pathname.replace('/', '');
+                if (id) return `https://www.youtube.com/embed/${id}`;
             }
         } catch (e) {}
         return url;
@@ -385,16 +403,29 @@ function ManagerProduct() {
             >
                 <div style={{ width: '100%', height: '56.25vw', maxHeight: '70vh' }}>
                     {previewTrailerUrl ? (
-                        (previewTrailerUrl.includes('youtube') || previewTrailerUrl.includes('youtu.be')) ? (
-                            <iframe src={previewTrailerUrl} title="Trailer" style={{ width: '100%', height: '100%' }} allowFullScreen />
+                        // Nếu là file mp4 -> dùng <video>, còn lại (YouTube, iframe...) -> dùng <iframe embed>
+                        previewTrailerUrl.toLowerCase().endsWith('.mp4') ? (
+                            <video
+                                src={previewTrailerUrl}
+                                controls
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
                         ) : (
-                            <video src={previewTrailerUrl} controls style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <iframe
+                                src={toEmbedUrl(previewTrailerUrl)}
+                                title="Trailer"
+                                style={{ width: '100%', height: '100%', border: 'none' }}
+                                allowFullScreen
+                            />
                         )
                     ) : (
-                        <div style={{ padding: 24, color: '#fff', textAlign: 'center' }}>Trailer chưa có</div>
+                        <div style={{ padding: 24, color: '#fff', textAlign: 'center' }}>
+                            Trailer chưa có
+                        </div>
                     )}
                 </div>
             </Modal>
+
 
             <Modal
                 title={editingMovie ? 'Chỉnh sửa phim' : 'Thêm phim mới'}

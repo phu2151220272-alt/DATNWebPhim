@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Header from '../Components/Header';
 import Footer from '../Components/Footer';
 import axios from 'axios';
-
+import moment from 'moment';
 import { Link, useParams } from 'react-router-dom';
 import { requestGetMovieById } from '../config/request';
 import { Rate, Modal } from 'antd';
@@ -13,6 +13,15 @@ function DetailMovie() {
     const [loading, setLoading] = useState(true);
     const [previewMovie, setPreviewMovie] = useState(null);
     const [trailerVisible, setTrailerVisible] = useState(false);
+    const [now, setNow] = useState(moment());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setNow(moment());
+        }, 60 * 1000); // cập nhật mỗi phút
+
+        return () => clearInterval(timer);
+    }, []);
     const toEmbedUrl = (url) => {
         if (!url) return '';
         // nếu là youtube watch URL -> chuyển sang embed
@@ -66,7 +75,28 @@ function DetailMovie() {
             </div>
         );
     }
+    // Phim có category "Phim Sắp Chiếu"?
+    const isComingSoonCategory =
+        movie.category &&
+        movie.category.toLowerCase().includes('phim sắp chiếu');
 
+    // So sánh ngày dạng chuỗi để khỏi lệch timezone
+    const todayStr = moment().format('YYYY-MM-DD');
+    const startStr = movie.dateStart
+        ? moment(movie.dateStart).format('YYYY-MM-DD')
+        : null;
+
+    // Chưa tới ngày chiếu & vẫn còn ở danh mục "Phim Sắp Chiếu"
+    const isComingSoonNow =
+        isComingSoonCategory &&
+        startStr &&
+        todayStr < startStr;
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return 'đang cập nhật';
+        const m = moment(dateStr);
+        return m.isValid() ? m.format('DD/MM/YYYY') : 'đang cập nhật';
+    };
     return (
         <div className="bg-[#161616] min-h-screen text-white">
             <header>
@@ -173,11 +203,36 @@ function DetailMovie() {
 
                                 {/* Action buttons */}
                                 <div className="flex flex-col sm:flex-row gap-4 mt-8">
-                                    <Link to={`/booking/${movie.id}`}>
-                                        <button className="bg-red-600 hover:bg-red-700 text-white py-3 px-8 rounded-md text-lg font-semibold transition-colors">
-                                            Đặt vé
-                                        </button>
-                                    </Link>
+                                    {isComingSoonNow ? (
+                                        <div className="bg-[#212121]/90 text-white px-6 py-4 rounded-md text-sm md:text-base max-w-md">
+                                            <p className="font-semibold text-yellow-400 mb-1">
+                                                Phim dự kiến khởi chiếu:
+                                            </p>
+                                            <p>
+                                                Từ{' '}
+                                                <span className="font-semibold">
+                                                    {formatDate(movie.dateStart)}
+                                                </span>
+                                                {movie.dateEnd && (
+                                                    <>
+                                                        {' '}đến{' '}
+                                                        <span className="font-semibold">
+                                                            {formatDate(movie.dateEnd)}
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </p>
+                                            <p className="mt-2 text-gray-300">
+                                                Hiện tại bạn chưa thể đặt vé cho phim này. Vui lòng quay lại sau khi phim được mở bán.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <Link to={`/booking/${movie.id}`}>
+                                            <button className="bg-red-600 hover:bg-red-700 text-white py-3 px-8 rounded-md text-lg font-semibold transition-colors">
+                                                Đặt vé
+                                            </button>
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
                         </div>

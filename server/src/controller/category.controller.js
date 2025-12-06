@@ -20,21 +20,76 @@ class controllerCategory {
     }
 
     async getAllCategory(req, res) {
-        const categories = await modelCategory.findAll({});
-        const data = await Promise.all(
-            categories.map(async (category) => {
-                const movies = await modelMovie.findAll({ where: { category: category.id } });
-                return {
-                    ...category.dataValues,
-                    movies,
-                };
-            }),
-        );
-        new OK({
-            message: 'Get all category successfully',
-            metadata: data,
-        }).send(res);
-    }
+    // Lấy tất cả category
+    const categories = await modelCategory.findAll({});
+
+    // Gắn list phim cho từng category
+    const data = await Promise.all(
+        categories.map(async (category) => {
+            const movies = await modelMovie.findAll({
+                where: { category: category.id },
+            });
+            return {
+                ...category.dataValues,
+                movies,
+            };
+        }),
+    );
+
+    // HÀM TÍNH THỨ TỰ ƯU TIÊN
+    const getRank = (name = '') => {
+        const lower = name.toLowerCase().trim();
+
+        // 0: Phim nổi bật tháng
+        if (
+            lower.includes('nổi bật') ||
+            lower.includes('noi bat')
+        ) {
+            return 0;
+        }
+
+        // 1: Phim Đang Chiếu
+        if (
+            lower.includes('đang chiếu') ||
+            lower.includes('dang chieu')
+        ) {
+            return 1;
+        }
+
+        // 2: Phim Sắp Chiếu
+        if (
+            lower.includes('sắp chiếu') ||
+            lower.includes('sap chieu')
+        ) {
+            return 2;
+        }
+
+        // 3: Các loại khác
+        return 3;
+    };
+
+    // Sắp xếp: Nổi bật tháng -> Đang chiếu -> Sắp chiếu -> khác
+    data.sort((a, b) => {
+        const aRank = getRank(a.nameCategory);
+        const bRank = getRank(b.nameCategory);
+
+        if (aRank !== bRank) {
+            return aRank - bRank;
+        }
+
+        // Nếu cùng rank thì giữ theo thời gian tạo (cũ trước, mới sau)
+        const aCreated = new Date(a.createdAt).getTime();
+        const bCreated = new Date(b.createdAt).getTime();
+        return aCreated - bCreated;
+    });
+
+    new OK({
+        message: 'Get all category successfully',
+        metadata: data,
+    }).send(res);
+}
+
+
 
     async deleteCategory(req, res) {
         const { id } = req.query;

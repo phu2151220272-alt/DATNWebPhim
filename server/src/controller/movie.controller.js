@@ -3,7 +3,7 @@ const modelCategory = require('../models/category.model');
 const modelSeat = require('../models/seat.model');
 const modelPreviewMovie = require('../models/previewMovie.model');
 const modelUser = require('../models/users.model');
-
+const moment = require('moment');
 const { AuthFailureError, BadRequestError } = require('../core/error.response');
 const { OK, Created } = require('../core/success.response');
 
@@ -27,6 +27,39 @@ function getPublicId(url) {
     const publicId = publicIdWithExt.substring(0, publicIdWithExt.lastIndexOf('.'));
 
     return publicId;
+}
+// Tự động cập nhật category "Phim Sắp Chiếu" -> "Phim Đang Chiếu" nếu đã tới ngày chiếu
+async function autoUpdateMovieCategory(movie) {
+    if (!movie) return movie;
+
+    const todayStr = moment().format('YYYY-MM-DD');
+    const startStr = movie.dateStart
+        ? moment(movie.dateStart).format('YYYY-MM-DD')
+        : null;
+
+    // Không có ngày bắt đầu / chưa tới ngày -> thôi khỏi đổi
+    if (!startStr || todayStr < startStr) return movie;
+
+    // Tìm 2 danh mục
+    const comingSoon = await modelCategory.findOne({
+        where: { nameCategory: 'Phim Sắp Chiếu' },
+    });
+    const nowShowing = await modelCategory.findOne({
+        where: { nameCategory: 'Phim Đang Chiếu' },
+    });
+
+    if (!comingSoon || !nowShowing) {
+        // Thiếu category trong DB thì bỏ qua, khỏi làm gì để tránh lỗi
+        return movie;
+    }
+
+    // Nếu phim đang nằm trong "Phim Sắp Chiếu" thì chuyển sang "Phim Đang Chiếu"
+    if (movie.category === comingSoon.id) {
+        movie.category = nowShowing.id;
+        await movie.save();
+    }
+
+    return movie;
 }
 
 class MovieController {
@@ -162,32 +195,63 @@ class MovieController {
     }
 
     async getMovieById(req, res) {
-        const { id } = req.query;
-        const movie = await modelMovie.findOne({ where: { id } });
+        try {
+            const { id } = req.query;
+            console.log('getMovieById query:', req.query);
 
-        const findCategory = await modelCategory.findOne({ where: { id: movie.category } });
-        const seats = await modelSeat.findAll({ where: { movieId: id } });
-        const previewMovie = await modelPreviewMovie.findAll({ where: { movieId: id } });
-        const dataUserPreview = await Promise.all(
-            previewMovie.map(async (preview) => {
-                const user = await modelUser.findOne({ where: { id: preview.userId } });
-                return {
-                    ...preview.dataValues,
-                    user,
-                };
-            }),
-        );
-        const data = {
-            ...movie.dataValues,
-            category: findCategory.nameCategory,
-            seats,
-            previewMovie: dataUserPreview,
-        };
+            if (!id) {
+                return new BadRequestError('Movie id is required').send(res);
+            }
 
-        new OK({
-            message: 'Get movie by id successfully',
-            metadata: data,
-        }).send(res);
+            let movie = await modelMovie.findOne({ where: { id } });
+
+            if (!movie) {
+                // Không tìm thấy phim -> metadata = null
+                return new OK({
+                    message: 'Movie not found',
+                    metadata: null,
+                }).send(res);
+            }
+
+            // 🔁 Tự động cập nhật category theo ngày chiếu
+            movie = await autoUpdateMovieCategory(movie);
+
+            // Lấy category theo id mới nhất
+            const findCategory = await modelCategory.findOne({
+                where: { id: movie.category },
+            });
+
+            const seats = await modelSeat.findAll({ where: { movieId: id } });
+            const previewMovie = await modelPreviewMovie.findAll({ where: { movieId: id } });
+
+            const dataUserPreview = await Promise.all(
+                previewMovie.map(async (preview) => {
+                    const user = await modelUser.findOne({ where: { id: preview.userId } });
+                    return {
+                        ...preview.dataValues,
+                        user,
+                    };
+                }),
+            );
+
+            const data = {
+                ...movie.dataValues,
+                category: findCategory ? findCategory.nameCategory : null,
+                seats,
+                previewMovie: dataUserPreview,
+            };
+
+            new OK({
+                message: 'Get movie by id successfully',
+                metadata: data,
+            }).send(res);
+        } catch (err) {
+            console.error('getMovieById error:', err);
+            // Tránh để lỗi rơi ra ngoài -> FE thấy 500 mà không biết lý do
+            return res.status(500).json({
+                message: 'Internal server error in getMovieById',
+            });
+        }
     }
 
     async getSeatByMovieId(req, res) {

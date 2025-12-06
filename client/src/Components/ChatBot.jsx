@@ -154,6 +154,46 @@ function Chatbot() {
             minute: '2-digit',
         });
     };
+    const renderMessageContent = (content) => {
+        if (!content) return null;
+
+        const urlRegex = /(https?:\/\/[^\s]+)/;
+        const match = content.match(urlRegex);
+
+        if (match) {
+            const url = match[0].replace(/[.,;!?]+$/, ""); // xử lý dấu thừa cuối link
+
+            // Lấy phần text TRƯỚC URL
+            let beforeText = content.substring(0, match.index);
+
+            // XÓA cụm "đặt vé", "đặt vé:", "đặt vé tại:", "Đặt vé :" v.v.
+            beforeText = beforeText.replace(/đặt vé( tại)?[:]?/gi, "").trim();
+
+            return (
+                <div className="space-y-2">
+                    {/* Hiển thị đoạn text trước URL (đã xoá chữ 'đặt vé') */}
+                    {beforeText && (
+                        <p className="whitespace-pre-wrap">
+                            {beforeText}
+                        </p>
+                    )}
+
+                    {/* Render nút đặt vé */}
+                    <Button
+                        type="primary"
+                        size="small"
+                        onClick={() => window.open(url, "_blank")}
+                        className="bg-red-600 hover:bg-red-700 border-none"
+                    >
+                        Đặt vé
+                    </Button>
+                </div>
+            );
+        }
+        // Không có URL → render bình thường
+        return <span className="whitespace-pre-wrap">{content}</span>;
+};
+
 
     return (
         <div className="fixed bottom-30 right-6 z-50">
@@ -211,7 +251,7 @@ function Chatbot() {
                                             }`}
                                         >
                                             <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                                                {message.content}
+                                                {renderMessageContent(message.content)}
                                             </p>
                                         </div>
                                         <Text

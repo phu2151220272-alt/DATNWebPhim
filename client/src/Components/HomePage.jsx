@@ -14,7 +14,7 @@ function HomePage() {
         };
         fetchData();
     }, []);
-
+    
     return (
         <div className="w-[90%] mx-auto">
             {categories.map((item) => (

@@ -23,7 +23,7 @@ async function askMovieAssistant(question, userId) {
         const conversationText = conversation
             .map((msg) => `${msg.sender === 'user' ? 'Người dùng' : 'Bot'}: ${msg.content}`)
             .join('\n');
-
+         const bookingUrl = (movieId) => `http://localhost:5173/booking/${movieId}`
         // 🎬 Lấy toàn bộ phim
         const movies = await Movies.findAll();
 
@@ -42,6 +42,7 @@ Năm chiếu: ${m.year}
 Thời lượng: ${m.time}
 Giá xem: ${m.price || 'Miễn phí'}
 Mô tả: ${m.description.substring(0, 120)}...
+Đặt vé:${bookingUrl(m.id)};
 ===============================`,
             )
             .join('\n');
@@ -62,7 +63,8 @@ Hướng dẫn:
 1. Gợi ý phim dựa theo yêu cầu người dùng (thể loại, diễn viên, quốc gia, chất lượng, năm, giá...).
 2. Không bịa thêm phim không có trong danh sách.
 3. Trả lời tự nhiên, ngắn gọn, thân thiện.
-4. Không tạo link xem phim.
+4. Khi cần đưa link đặt vé, hãy dùng **nguyên văn** đường dẫn sau phần "Đặt vé:" trong dữ liệu phim.
+   Không được thêm dấu chấm, dấu phẩy hoặc ký tự nào ngay sau URL.
 `;
 
         // Gọi Groq AI
