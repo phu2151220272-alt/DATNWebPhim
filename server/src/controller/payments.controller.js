@@ -207,20 +207,20 @@ class PaymentsController {
         const user = await User.findOne({ where: { id: idUser } });
         const movie = await Movie.findOne({ where: { id: idMovie } });
 
-        // // Chuẩn bị dữ liệu gửi email
-        // const seatsString = seats.join(', ');
-        // const displayDate = dayjs(date).format('DD/MM/YYYY');
+        // Chuẩn bị dữ liệu gửi email
+        const seatsString = seats.join(', ');
+        const displayDate = dayjs(date).format('DD/MM/YYYY');
 
-        // // Gửi email xác nhận
-        // await sendMailPaymentSuccess(user.email, {
-        //     movieName: movie.name,
-        //     seats: seatsString,
-        //     time: time,
-        //     date: displayDate,
-        //     totalPrice: totalPrice,
-        //     paymentId: payment.id,
-        //     paymentMethod: payment.paymentMethod,
-        // });
+        // Gửi email xác nhận
+        await sendMailPaymentSuccess(user.email, {
+            movieName: movie.name,
+            seats: seatsString,
+            time: time,
+            date: displayDate,
+            totalPrice: totalPrice,
+            paymentId: payment.id,
+            paymentMethod: payment.paymentMethod,
+        });
 
         return res.redirect(`http://localhost:5173/payment-success/${payment.id}`);
     }
